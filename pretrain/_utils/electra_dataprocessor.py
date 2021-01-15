@@ -31,7 +31,6 @@ class ELECTRADataProcessor(object):
     )
 
   def __call__(self, texts):
-    print(len(texts), texts)
     if self.minimize_data_size: new_example = {'input_ids':[], 'sentA_length':[], 'first_segment':[], 'second_segment': []}
     else: new_example = {'input_ids':[], 'input_mask': [], 'segment_ids': []}
 
