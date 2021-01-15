@@ -12,7 +12,6 @@ def download_and_dls(c, hf_tokenizer, num_proc=1):
     if 'wikipedia' in c.datas:
         print('load/download wiki dataset')
         wiki = datasets.load_dataset('wikipedia', '20200501.en', cache_dir='./datasets')['train']
-        wiki = wiki.select(range(1000))
         print('load/create data from wiki dataset for ELECTRA')
         e_wiki = ELECTRAProcessor(wiki).map(cache_file_name=f"1000_electra_wiki_{c.max_length}.arrow", num_proc=num_proc)
         dsets.append(e_wiki)
