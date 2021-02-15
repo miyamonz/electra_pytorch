@@ -22,7 +22,7 @@ class HF_Dataset():
     # self.pad_idx = hf_toker.pad_token_id
     self.hf_dset = hf_dset
     self.cols = cols
-    # self.n_inp = n_inp
+    self.n_inp = n_inp
     # self.hf_toker = hf_toker
 
   def __getitem__(self, idx):

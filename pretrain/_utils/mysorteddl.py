@@ -1,12 +1,12 @@
 from torch.nn.utils.rnn import pad_sequence
-from fastai.text.all import *
+from fastai.text.all import TfmdDL
 
 class MySortedDL(TfmdDL):
     def __init__(self, dataset, pad_idx, srtkey_fc=None, filter_fc=False, cache_file=None, tfmd_args=None):
         """
         dataset: HF_Dataset Actually any object implements __len__ and __getitem__ that return a tuple as a sample.
         """
-        print('MySortedDl')
+        print('MySortedDL')
         
         print('pad_idx', pad_idx)  # 0
         pad_idxs = [pad_idx] * len(dataset[0])
