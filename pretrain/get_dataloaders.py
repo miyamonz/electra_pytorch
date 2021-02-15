@@ -1,11 +1,11 @@
-#from hugdatafast import HF_Datasets
-from _utils.hugdatafast import HF_Datasets
-from _utils.hugdatafast import MySortedDL
+from _utils.hf_dataset import HF_Dataset
+from _utils.mysorteddl import MySortedDL
 from pathlib import Path
 from fastai.text.all import DataLoaders
 from fastai.text.all import TensorText, noop
 
 def get_dataloaders(c, hf_tokenizer, train_dset):
+    print('train_dset', train_dset)
     ds = get_dataset(train_dset, hf_tokenizer)
 
     dl_args = {
@@ -32,12 +32,12 @@ def get_cache_file(cache_dir, cache_name, split='train'):
     return cache_file
 
 def get_dataset(train_dset, hf_tokenizer):
-    merged_dsets = {'train': train_dset}
-    hf_dsets = HF_Datasets(
-            merged_dsets,
-            cols={'input_ids': TensorText, 'sentA_length': noop},
-            hf_toker=hf_tokenizer, n_inp=2)
-    hf_dset_dict = hf_dsets.hf_dsets
-    ds = list(hf_dset_dict.values())[0]
+    args = {
+            'cols': {'input_ids': TensorText, 'sentA_length': noop},
+            'hf_toker': hf_tokenizer,
+            'n_inp': 2,
+            }
+    ds = HF_Dataset(train_dset, **args)
     return ds
+
 
