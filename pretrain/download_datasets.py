@@ -3,6 +3,7 @@ import datasets
 from _utils.electra_dataprocessor import ELECTRADataProcessor
 #from hugdatafast import HF_Datasets
 from _utils.hugdatafast import HF_Datasets
+from _utils.hugdatafast import MySortedDL
 from fastai.text.all import TensorText, noop
 
 
@@ -32,7 +33,8 @@ def download_and_dls(c, hf_tokenizer, num_proc=1):
             merged_dsets,
             cols={'input_ids': TensorText, 'sentA_length': noop},
             hf_toker=hf_tokenizer, n_inp=2)
-    dls = hf_dsets.dataloaders(
+    dls = dataloaders(
+            hf_dsets,
             bs=c.bs,
             num_workers=c.num_workers, pin_memory=False,
             shuffle_train=True,
@@ -40,3 +42,32 @@ def download_and_dls(c, hf_tokenizer, num_proc=1):
             cache_dir='./datasets/electra_dataloader',
             cache_name='dl_{split}.json')
     return dls
+
+
+def dataloaders(self, device='cpu', cache_dir=None, cache_name=None, dl_kwargs=None, **kwargs):
+    print('device', device)
+    print('kwargs', kwargs)
+    _dl_type = self._dl_type
+    hf_dsets = self.hf_dsets
+
+    if dl_kwargs is None: dl_kwargs = [{} for _ in range(len(hf_dsets))]
+    elif isinstance(dl_kwargs, dict):
+        dl_kwargs = [ dl_kwargs[split] if split in dl_kwargs else {} for split in hf_dsets]
+    # infer cache file names for each dataloader if needed
+    dl_type = kwargs.pop('dl_type', _dl_type)
+    if dl_type==MySortedDL and cache_name:
+        assert "{split}" in cache_name, "`cache_name` should be a string with '{split}' in it to be formatted."
+        cache_dir = Path(cache_dir) if cache_dir else self.cache_dir
+        cache_dir.mkdir(exist_ok=True)
+        if not cache_name.endswith('.json'): cache_name += '.json'
+        for i, split in enumerate(hf_dsets):
+            filled_cache_name = dl_kwargs[i].pop('cache_name', cache_name.format(split=split))
+            if 'cache_file' not in dl_kwargs[i]:
+                dl_kwargs[i]['cache_file'] = cache_dir/filled_cache_name
+    # change default to not drop last
+    kwargs['drop_last'] = kwargs.pop('drop_last', False)
+    # when corpus like glue/ax has only testset, set it to non-train setting
+    if list(hf_dsets.keys())[0].startswith('test'):
+        kwargs['shuffle_train'] = False
+        kwargs['drop_last'] = False
+    return super().dataloaders(dl_kwargs=dl_kwargs, device=device, **kwargs)
