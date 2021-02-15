@@ -5,7 +5,7 @@ from _utils.electra_dataprocessor import ELECTRADataProcessor
 from _utils.hugdatafast import HF_Datasets
 from _utils.hugdatafast import MySortedDL
 from pathlib import Path
-from fastai.text.all import FilteredBase
+from fastai.text.all import FilteredBase, merge
 from fastai.text.all import TensorText, noop
 
 
@@ -50,17 +50,17 @@ def download_and_dls(c, hf_tokenizer, num_proc=1):
 def dataloaders(self, cache_dir, cache_name, device='cpu', dl_kwargs=None, **kwargs):
     print('device', device)
     print('kwargs', kwargs) #{'bs': 128, 'num_workers': 3, 'pin_memory': False, 'shuffle_train': True, 'srtkey_fc': False}
-    _dl_type = self._dl_type
     hf_dsets = self.hf_dsets
+    print('self.hf_dsets', hf_dsets)
     print('dl_kwargs', dl_kwargs)
 
     if dl_kwargs is None: dl_kwargs = [{} for _ in range(len(hf_dsets))]
     elif isinstance(dl_kwargs, dict):
         dl_kwargs = [ dl_kwargs[split] if split in dl_kwargs else {} for split in hf_dsets]
     # infer cache file names for each dataloader if needed
-    dl_type = kwargs.pop('dl_type', _dl_type)
+    dl_type = MySortedDL
     print('dl_type', dl_type)
-    if dl_type==MySortedDL and cache_name:
+    if cache_name:
         assert "{split}" in cache_name, "`cache_name` should be a string with '{split}' in it to be formatted."
         cache_dir = Path(cache_dir)
         cache_dir.mkdir(exist_ok=True)
@@ -78,4 +78,19 @@ def dataloaders(self, cache_dir, cache_name, device='cpu', dl_kwargs=None, **kwa
         kwargs['drop_last'] = False
     
     print('kwargs', kwargs) #drop_last: false だけふえた
-    return FilteredBase.dataloaders(self, dl_kwargs=dl_kwargs, device=device, **kwargs)
+    return FilteredBase_dataloaders(self, dl_kwargs=dl_kwargs, device=device, **kwargs)
+
+
+def FilteredBase_dataloaders(self, dl_kwargs, bs=64, val_bs=None, shuffle_train=True, n=None, path='.', device=None, **kwargs):
+    n_subsets = len(self.hf_dsets)  # HF_Dataset.n_subsets
+    print('n_subsets', n_subsets)  # = 1
+    print('dl_kwargs', dl_kwargs)  # [{cache_file}]
+    # if device is None: device=default_device()
+    drop_last = kwargs.pop('drop_last', shuffle_train)
+    print('drop_last', drop_last)
+    ds = list(self.hf_dsets.values())[0]
+    dl = MySortedDL(ds, bs=bs, shuffle=shuffle_train, drop_last=drop_last, n=n, device=device,
+        **merge(kwargs, dl_kwargs[0]))
+    # dls = [dl] + [dl.new(self.subset(i), bs=(bs if val_bs is None else val_bs), shuffle=False, drop_last=False, n=None, **dl_kwargs[i]) for i in range(1, n_subsets)]
+    print('self._dbunch_type', self._dbunch_type)
+    return self._dbunch_type(dl, path=path, device=device)
