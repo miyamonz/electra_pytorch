@@ -12,16 +12,17 @@ def get_dataloaders(c, hf_tokenizer, train_dset):
         'n_inp': 2,
         }
     ds = HF_Dataset(train_dset, **args)
-
-    dl_args = {
+    
+    device = 'cpu'
+    tfmd_args = {
             'bs': c.bs,
             'num_workers': c.num_workers,
             'pin_memory': False,
-            'srtkey_fc': False,
+            'shuffle': True,
+            'drop_last': False,
+            'device': device,
             }
-    shuffle_train = True
-    device = 'cpu'
-    dl = MySortedDL(ds, shuffle=shuffle_train, drop_last=False, device=device, **dl_args)
+    dl = MySortedDL(ds,srtkey_fc=False, tfmd_args=tfmd_args)
     return DataLoaders(dl, path='.', device=device)
 
 
