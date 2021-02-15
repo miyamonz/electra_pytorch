@@ -5,7 +5,7 @@ from _utils.electra_dataprocessor import ELECTRADataProcessor
 from _utils.hugdatafast import HF_Datasets
 from _utils.hugdatafast import MySortedDL
 from pathlib import Path
-from fastai.text.all import FilteredBase, merge, DataLoaders
+from fastai.text.all import DataLoaders
 from fastai.text.all import TensorText, noop
 
 
@@ -64,9 +64,9 @@ def dataloaders(hf_dset_dict, cache_dir, cache_name, device='cpu', **kwargs):
         cache_dir.mkdir(exist_ok=True)
         if not cache_name.endswith('.json'): cache_name += '.json'
         for i, split in enumerate(hf_dset_dict):
-            filled_cache_name = dl_kwargs[i].pop('cache_name', cache_name.format(split=split))
-            if 'cache_file' not in dl_kwargs[i]:
-                dl_kwargs[i]['cache_file'] = cache_dir/filled_cache_name
+            cache_file = cache_dir / cache_name.format(split=split)
+            assert('cache_file' not in dl_kwargs[i])
+            dl_kwargs[i]['cache_file'] = cache_file
     # change default to not drop last
     kwargs['drop_last'] = kwargs.pop('drop_last', False)
 
@@ -89,5 +89,5 @@ def FilteredBase_dataloaders(hf_dset_dict, dl_kwargs, bs=64, shuffle_train=True,
     print('drop_last', drop_last)
     ds = list(hf_dset_dict.values())[0]
     dl = MySortedDL(ds, bs=bs, shuffle=shuffle_train, drop_last=drop_last, n=n, device=device,
-        **merge(kwargs, dl_kwargs[0]))
+            cache_file=dl_kwargs[0]['cache_file'], **kwargs)
     return DataLoaders(dl, path=path, device=device)
