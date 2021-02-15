@@ -50,44 +50,42 @@ def download_and_dls(c, hf_tokenizer, num_proc=1):
 
 
 def dataloaders(hf_dset_dict, cache_dir, cache_name, device='cpu', **kwargs):
-    print('device', device)
-    print('kwargs', kwargs) #{'bs': 128, 'num_workers': 3, 'pin_memory': False, 'shuffle_train': True, 'srtkey_fc': False}
+    print('device', device)  # cpu
+    print('kwargs', kwargs)  # {'bs': 128, 'num_workers': 3, 'pin_memory': False, 'shuffle_train': True, 'srtkey_fc': False}
 
-    dl_kwargs = [{} for _ in range(len(hf_dset_dict))]
-    print('dl_kwargs', dl_kwargs)
+#     dl_kwargs = [{} for _ in range(len(hf_dset_dict))]
+#     print('dl_kwargs', dl_kwargs)
     # infer cache file names for each dataloader if needed
-    dl_type = MySortedDL
-    print('dl_type', dl_type)
-    if cache_name:
-        assert "{split}" in cache_name, "`cache_name` should be a string with '{split}' in it to be formatted."
-        cache_dir = Path(cache_dir)
-        cache_dir.mkdir(exist_ok=True)
-        if not cache_name.endswith('.json'): cache_name += '.json'
-        for i, split in enumerate(hf_dset_dict):
-            cache_file = cache_dir / cache_name.format(split=split)
-            assert('cache_file' not in dl_kwargs[i])
-            dl_kwargs[i]['cache_file'] = cache_file
+
+    assert "{split}" in cache_name, "`cache_name` should be a string with '{split}' in it to be formatted."
+    cache_dir = Path(cache_dir)
+    cache_dir.mkdir(exist_ok=True)
+    if not cache_name.endswith('.json'): cache_name += '.json'
+#     for i, split in enumerate(hf_dset_dict):
+#         cache_file = cache_dir / cache_name.format(split=split)
+#         assert('cache_file' not in dl_kwargs[i])
+#         dl_kwargs[i]['cache_file'] = cache_file
+    cache_file = cache_dir / cache_name.format(split='train')
+
     # change default to not drop last
     kwargs['drop_last'] = kwargs.pop('drop_last', False)
 
     # when corpus like glue/ax has only testset, set it to non-train setting
-    if list(hf_dset_dict.keys())[0].startswith('test'):
-        kwargs['shuffle_train'] = False
-        kwargs['drop_last'] = False
+#     if list(hf_dset_dict.keys())[0].startswith('test'):
+#         kwargs['shuffle_train'] = False
+#         kwargs['drop_last'] = False
     
-    print('kwargs', kwargs) #drop_last: false だけふえた
-    return FilteredBase_dataloaders(hf_dset_dict, dl_kwargs=dl_kwargs, device=device, **kwargs)
-
-
-def FilteredBase_dataloaders(hf_dset_dict, dl_kwargs, bs=64, shuffle_train=True, n=None, path='.', device=None, **kwargs):
-    n_subsets = len(hf_dset_dict)  # HF_Dataset.n_subsets
-    print('n_subsets', n_subsets)  # = 1
-    print('dl_kwargs', dl_kwargs)  # [{cache_file}]
-    print('kwargs', kwargs)
-    # if device is None: device=default_device()
-    drop_last = kwargs.pop('drop_last', shuffle_train)
-    print('drop_last', drop_last)
+    print('kwargs', kwargs)  # drop_last: false だけふえた
     ds = list(hf_dset_dict.values())[0]
-    dl = MySortedDL(ds, bs=bs, shuffle=shuffle_train, drop_last=drop_last, n=n, device=device,
-            cache_file=dl_kwargs[0]['cache_file'], **kwargs)
+    return FilteredBase_dataloaders(ds, cache_file, device, **kwargs)
+
+
+def FilteredBase_dataloaders(ds, cache_file,device, bs=64, shuffle_train=True, path='.', **kwargs):
+    print('kwargs', kwargs)  # {'num_workers': 3, 'pin_memory': False, 'srtkey_fc': False, 'drop_last': False} 
+    print('path', path)
+
+    drop_last = kwargs.pop('drop_last', shuffle_train)
+    print('drop_last', drop_last)  # false
+    dl = MySortedDL(ds, bs=bs, shuffle=shuffle_train, drop_last=drop_last, n=None, device=device,
+            cache_file=cache_file, **kwargs)
     return DataLoaders(dl, path=path, device=device)
