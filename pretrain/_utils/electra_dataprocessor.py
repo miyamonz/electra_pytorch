@@ -19,7 +19,17 @@ class ELECTRADataProcessor(object):
   def map(self, **kwargs):
     "Some settings of datasets.Dataset.map for ELECTRA data processing"
     num_proc = kwargs.pop('num_proc', os.cpu_count())
-    return self.hf_dset.my_map(
+
+    cache_file_name = kwargs.pop('cache_file_name', None)
+    print('cache_file_name', cache_file_name)
+    if cache_file_name is not None:
+        if not cache_file_name.endswith('.arrow'): cache_file_name += '.arrow'
+        cache_directory = os.path.abspath(os.path.dirname(self.hf_dset.cache_files[0]['filename']))
+        if '/' not in cache_file_name: cache_file_name = os.path.join(cache_directory, cache_file_name)
+    print('cache_file_name', cache_file_name)
+
+    return self.hf_dset.map(
+      cache_file_name=cache_file_name,
       function=self,
       batched=True,
       remove_columns=self.hf_dset.column_names, # this is must b/c we will return different number of rows
