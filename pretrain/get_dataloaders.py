@@ -6,7 +6,12 @@ from fastai.text.all import TensorText, noop
 
 def get_dataloaders(c, hf_tokenizer, train_dset):
     print('train_dset', train_dset)
-    ds = get_dataset(train_dset, hf_tokenizer)
+    args = {
+        'cols': {'input_ids': TensorText, 'sentA_length': noop},
+        'hf_toker': hf_tokenizer,
+        'n_inp': 2,
+        }
+    ds = HF_Dataset(train_dset, **args)
 
     dl_args = {
             'bs': c.bs,
@@ -16,9 +21,9 @@ def get_dataloaders(c, hf_tokenizer, train_dset):
             }
     shuffle_train = True
     device = 'cpu'
-    # MySortedDL, TfmdDLがkwargsをどう使うか見る必要があるが、shuffle_trainはなかった
     dl = MySortedDL(ds, shuffle=shuffle_train, drop_last=False, device=device, **dl_args)
     return DataLoaders(dl, path='.', device=device)
+
 
 # currently not used because MySortedDL doesn't have cache target when srtkey_fc = False
 # cache_file = get_cache_file('./datasets/electra_dataloader', 'dl_{split}.json')
@@ -30,12 +35,3 @@ def get_cache_file(cache_dir, cache_name, split='train'):
         cache_name += '.json'
     cache_file = cache_dir / cache_name.format(split=split)
     return cache_file
-
-def get_dataset(train_dset, hf_tokenizer):
-    args = {
-            'cols': {'input_ids': TensorText, 'sentA_length': noop},
-            'hf_toker': hf_tokenizer,
-            'n_inp': 2,
-            }
-    ds = HF_Dataset(train_dset, **args)
-    return ds
