@@ -2,17 +2,12 @@ from torch.nn.utils.rnn import pad_sequence
 from fastai.text.all import *
 
 class MySortedDL(TfmdDL):
-    def __init__(self, dataset, srtkey_fc=None, filter_fc=False, cache_file=None, tfmd_args=None):
+    def __init__(self, dataset, pad_idx, srtkey_fc=None, filter_fc=False, cache_file=None, tfmd_args=None):
         """
         dataset: HF_Dataset Actually any object implements __len__ and __getitem__ that return a tuple as a sample.
         """
         print('MySortedDl')
-        # Defaults
-        print('srtkey_fc', srtkey_fc)
-        print('filter_fc', filter_fc)
-        print('cache_file', cache_file) # is only used when srtkey or filter fc exists
         
-        pad_idx = getattr(dataset, 'pad_idx', False)
         print('pad_idx', pad_idx)  # 0
         pad_idxs = [pad_idx] * len(dataset[0])
         print('pad_idxs', pad_idxs)
@@ -21,8 +16,6 @@ class MySortedDL(TfmdDL):
         # Save attributes
         super().__init__(dataset, **tfmd_args)
         self.pad_idxs = pad_idxs
-        self.srtkey_fc = srtkey_fc
-        self.cache_file = cache_file
 
     def create_item(self, i):
         return self.dataset[i]
