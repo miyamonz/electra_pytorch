@@ -1,7 +1,8 @@
 from functools import partial
 import datasets
 from _utils.electra_dataprocessor import ELECTRADataProcessor
-from hugdatafast import HF_Datasets
+#from hugdatafast import HF_Datasets
+from _utils.hugdatafast import HF_Datasets
 from fastai.text.all import TensorText, noop
 
 
