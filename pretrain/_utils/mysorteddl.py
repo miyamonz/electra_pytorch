@@ -3,6 +3,9 @@ from fastai.text.all import *
 
 class MySortedDL(TfmdDL):
     def __init__(self, dataset, srtkey_fc=None, filter_fc=False, pad_idx=None, cache_file=None, **kwargs):
+        """
+        dataset: HF_Dataset Actually any object implements __len__ and __getitem__ that return a tuple as a sample.
+        """
         print('MySortedDl')
         # Defaults
         print('srtkey_fc', srtkey_fc)
@@ -21,7 +24,8 @@ class MySortedDL(TfmdDL):
         super().__init__(dataset, **kwargs)
         store_attr('pad_idxs,srtkey_fc,cache_file', self)
 
-    def create_item(self, i): return self.dataset[i]
+    def create_item(self, i):
+        return self.dataset[i]
 
     def create_batch(self, samples):
         # if self.pad_idx is False: return super().create_batch(samples)
