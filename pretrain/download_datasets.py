@@ -37,45 +37,36 @@ def download_and_dls(c, hf_tokenizer, num_proc=1):
             hf_toker=hf_tokenizer, n_inp=2)
     hf_dset_dict = hf_dsets.hf_dsets
     ds = list(hf_dset_dict.values())[0]
-    dls = dataloaders(
-            ds,
-            './datasets/electra_dataloader',  # cache_dir
-            'dl_{split}.json',  # cache_name
-            #  kwargs
-            bs=c.bs,
-            num_workers=c.num_workers, pin_memory=False,
-            srtkey_fc=False,
-    )
+
+    dl_args = {
+            'bs': c.bs,
+            'num_workers': c.num_workers,
+            'pin_memory': False,
+            'srtkey_fc': False,
+            }
+    cache_file = get_cache_file('./datasets/electra_dataloader', 'dl_{split}.json')
+    dls = dataloaders(ds, cache_file, dl_args)
     return dls
 
-
-def dataloaders(ds, cache_dir, cache_name, device='cpu', **kwargs):
-    print('device', device)  # cpu
-    print('kwargs inside dataloaders', kwargs)
-
-
+def get_cache_file(cache_dir, cache_name, split='train'):
     assert "{split}" in cache_name, "`cache_name` should be a string with '{split}' in it to be formatted."
     cache_dir = Path(cache_dir)
     cache_dir.mkdir(exist_ok=True)
     if not cache_name.endswith('.json'): cache_name += '.json'
-    cache_file = cache_dir / cache_name.format(split='train')
+    cache_file = cache_dir / cache_name.format(split=split)
+    return cache_file
 
 
+def dataloaders(ds, cache_file, dl_args):
+    device='cpu'
     shuffle_train = True
     # when corpus like glue/ax has only testset, set it to non-train setting
 #     if list(hf_dset_dict.keys())[0].startswith('test'):
 #         # kwargs['shuffle_train'] = False
 #         shuffle_train = False
 #         kwargs['drop_last'] = False
-    
-    print('kwargs before fb', kwargs)
-    return FilteredBase_dataloaders(ds, cache_file, device, shuffle_train, **kwargs)
-
-
-def FilteredBase_dataloaders(ds, cache_file, device, shuffle_train, **kwargs):
-    print('kwargs inside fb', kwargs)
 
     # MySortedDL, TfmdDLがkwargsをどう使うか見る必要があるが、shuffle_trainはなかった
-    dl = MySortedDL(ds, shuffle=shuffle_train, drop_last=False, n=None, device=device,
-            cache_file=cache_file, **kwargs)
+    dl = MySortedDL(ds, shuffle=shuffle_train, drop_last=False, device=device,
+            cache_file=cache_file, **dl_args)
     return DataLoaders(dl, path='.', device=device)
