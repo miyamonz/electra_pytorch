@@ -1,6 +1,7 @@
 from functools import partial
 from fastai.text.all import ParamScheduler
 
+# こっちがoriginal
 def linear_warmup_and_decay(pct, lr_max, total_steps, warmup_steps=None, warmup_pct=None, end_lr=0.0, decay_power=1):
     """ pct (float): fastai count it as ith_step/num_epoch*len(dl), so we can't just use pct when our num_epoch is fake.he ith_step is count from 0, """
     if warmup_pct:
@@ -26,6 +27,8 @@ def linear_warmup_and_then_decay(pct, lr_max, total_steps, warmup_steps=None, wa
 
 
 def get_scheduler(c):
+    # c.scheduler == 'original_linear'
+
     # Learning rate shedule
     if c.schedule.endswith('linear'):
         # 何故か使われてなかった　fine-tuningには使われてた
