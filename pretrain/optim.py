@@ -9,6 +9,7 @@ def adam_no_correction_step(p, lr, mom, step, sqr_mom, grad_avg, sqr_avg, eps, *
     p.data.addcdiv_(grad_avg, (sqr_avg).sqrt() + eps, value = -lr)
     return p
 
+# これはAdamの一部を変えたもの
 def Adam_no_bias_correction(params, lr, mom=0.9, sqr_mom=0.99, eps=1e-5, wd=0.01, decouple_wd=True):
     "A `Optimizer` for Adam with `lr`, `mom`, `sqr_mom`, `eps` and `params`"
     cbs = [weight_decay] if decouple_wd else [l2_reg]

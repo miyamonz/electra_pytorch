@@ -4,7 +4,6 @@ import torch.nn.functional as F
 
 import pytorch_lightning as pl
 
-from optim import get_optim
 from scheduler import get_scheduler
 
 from fastai.text.all import CrossEntropyLossFlat
@@ -31,8 +30,10 @@ class LitElectra(pl.LightningModule):
         return loss
 
     def configure_optimizers(self):
+        # eps=1e-6, mom=0.9, sqr_mom=0.999, wd=0.01)
+        # momentum, squared momentumはpytorchではbetasにあたる。で↑は初期値と一緒
+        optim = torch.optim.Adam(self.parameters(), lr=self.config.lr, eps=1e-6, weight_decay=0.01)
         # TODO: get_* are currently returns fasati object
-        optim = get_optim(c)
         scheduler = get_scheduler(c)
         return optim, scheduler
 
