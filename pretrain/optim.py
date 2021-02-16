@@ -20,5 +20,6 @@ def get_optim(c):
     if c.adam_bias_correction:
         opt_func = partial(Adam, eps=1e-6, mom=0.9, sqr_mom=0.999, wd=0.01)
     else:
+        # いまはこっち使ってる
         opt_func = partial(Adam_no_bias_correction, eps=1e-6, mom=0.9, sqr_mom=0.999, wd=0.01)
     return opt_func

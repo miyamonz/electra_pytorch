@@ -1,10 +1,9 @@
 from _utils.hf_dataset import HF_Dataset
 from _utils.mysorteddl import MySortedDL
 from pathlib import Path
-from fastai.text.all import DataLoaders
 from fastai.text.all import TensorText, noop
 
-def get_dataloaders(c, hf_tokenizer, train_dset):
+def get_dataloader(c, hf_tokenizer, train_dset):
     print('train_dset', train_dset)
     args = {
         'cols': {'input_ids': TensorText, 'sentA_length': noop},
@@ -23,7 +22,7 @@ def get_dataloaders(c, hf_tokenizer, train_dset):
         'device': device,
         }
     dl = MySortedDL(ds, pad_idx, srtkey_fc=False, tfmd_args=tfmd_args)
-    return DataLoaders(dl, path='.', device=device)
+    return dl
 
 
 # currently not used because MySortedDL doesn't have cache target when srtkey_fc = False
