@@ -11,9 +11,9 @@ And
 """
 
 
-def mask_tokens(inputs, mask_token_index, vocab_size, special_token_indices, mlm_probability=0.15, replace_prob=0.1, orginal_prob=0.1, ignore_index=-100):
+def mask_tokens(inputs, mask_token_index, vocab_size, special_token_indices, mlm_probability=0.15, replace_prob=0.1, original_prob=0.1, ignore_index=-100):
     """
-    Prepare masked tokens inputs/labels for masked language modeling: (1-replace_prob-orginal_prob)% MASK, replace_prob% random, orginal_prob% original within mlm_probability% of tokens in the sentence.
+    Prepare masked tokens inputs/labels for masked language modeling: (1-replace_prob-original_prob)% MASK, replace_prob% random, original_prob% original within mlm_probability% of tokens in the sentence.
     * ignore_index in nn.CrossEntropy is default to -100, so you don't need to specify ignore_index in loss
     """
 
@@ -32,22 +32,22 @@ def mask_tokens(inputs, mask_token_index, vocab_size, special_token_indices, mlm
     # We only compute loss on mlm applied tokens
     labels[~mlm_mask] = ignore_index
 
-    # mask  (mlm_probability * (1-replace_prob-orginal_prob))
-    mask_prob = 1 - replace_prob - orginal_prob
+    # mask  (mlm_probability * (1-replace_prob-original_prob))
+    mask_prob = 1 - replace_prob - original_prob
     mask_token_mask = torch.bernoulli(torch.full(
         labels.shape, mask_prob, device=device)).bool() & mlm_mask
     inputs[mask_token_mask] = mask_token_index
 
     # replace with a random token (mlm_probability * replace_prob)
     if int(replace_prob) != 0:
-        rep_prob = replace_prob/(replace_prob + orginal_prob)
+        rep_prob = replace_prob/(replace_prob + original_prob)
     replace_token_mask = torch.bernoulli(torch.full(
         labels.shape, rep_prob, device=device)).bool() & mlm_mask & ~mask_token_mask
     random_words = torch.randint(
         vocab_size, labels.shape, dtype=torch.long, device=device)
     inputs[replace_token_mask] = random_words[replace_token_mask]
 
-    # do nothing (mlm_probability * orginal_prob)
+    # do nothing (mlm_probability * original_prob)
     pass
 
     return inputs, labels, mlm_mask
