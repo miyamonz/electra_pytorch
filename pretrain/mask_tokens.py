@@ -41,11 +41,11 @@ def mask_tokens(inputs, mask_token_index, vocab_size, special_token_indices, mlm
     # replace with a random token (mlm_probability * replace_prob)
     if int(replace_prob) != 0:
         rep_prob = replace_prob/(replace_prob + original_prob)
-    replace_token_mask = torch.bernoulli(torch.full(
-        labels.shape, rep_prob, device=device)).bool() & mlm_mask & ~mask_token_mask
-    random_words = torch.randint(
-        vocab_size, labels.shape, dtype=torch.long, device=device)
-    inputs[replace_token_mask] = random_words[replace_token_mask]
+        replace_token_mask = torch.bernoulli(torch.full(
+            labels.shape, rep_prob, device=device)).bool() & mlm_mask & ~mask_token_mask
+        random_words = torch.randint(
+            vocab_size, labels.shape, dtype=torch.long, device=device)
+        inputs[replace_token_mask] = random_words[replace_token_mask]
 
     # do nothing (mlm_probability * original_prob)
     pass
