@@ -1,10 +1,9 @@
 import torch
 from torch import nn
 import torch.nn.functional as F
+from transformers import get_linear_schedule_with_warmup
 
 import pytorch_lightning as pl
-
-from scheduler import get_scheduler
 
 from fastai.text.all import CrossEntropyLossFlat
 from fastai.text.all import LabelSmoothingCrossEntropyFlat
@@ -32,10 +31,15 @@ class LitElectra(pl.LightningModule):
     def configure_optimizers(self):
         # eps=1e-6, mom=0.9, sqr_mom=0.999, wd=0.01)
         # momentum, squared momentumはpytorchではbetasにあたる。で↑は初期値と一緒
-        optim = torch.optim.Adam(self.parameters(), lr=self.config.lr, eps=1e-6, weight_decay=0.01)
-        # TODO: get_* are currently returns fasati object
-        scheduler = get_scheduler(c)
-        return optim, scheduler
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.config.lr, eps=1e-6, weight_decay=0.01)
+
+        # 一旦、他のpytorch実装に習う
+        scheduler = get_linear_schedule_with_warmup(
+                optimizer,
+                num_warmup_steps=10000,
+                num_training_steps=self.config.steps,
+                )
+        return [optimizer], [scheduler]
 
     def forward(self, input):
         print(input)
