@@ -4,7 +4,7 @@ from pathlib import Path
 from fastai.text.all import TensorText, noop
 
 
-def get_dataloader(c, hf_tokenizer, train_dset):
+def get_dataloader(c, hf_tokenizer, train_dset, device='cpu'):
     print('train_dset', train_dset)
     args = {
         'cols': {'input_ids': TensorText, 'sentA_length': noop},
@@ -13,7 +13,6 @@ def get_dataloader(c, hf_tokenizer, train_dset):
     }
     ds = HF_Dataset(train_dset, **args)
     pad_idx = hf_tokenizer.pad_token_id
-    device = 'cpu'
     tfmd_args = {
         'bs': c.bs,
         'num_workers': c.num_workers,
