@@ -1,9 +1,12 @@
 import torch
 from torch import nn
 import torch.nn.functional as F
-from transformers import get_linear_schedule_with_warmup
-
 import pytorch_lightning as pl
+
+from functools import partial
+
+from transformers import get_linear_schedule_with_warmup
+from mask_tokens import mask_tokens
 
 from fastai.text.all import CrossEntropyLossFlat
 from fastai.text.all import LabelSmoothingCrossEntropyFlat
@@ -20,11 +23,31 @@ class LitElectra(pl.LightningModule):
         self.sampling = sampling
 
         self.config = config
+        self.mask_tokens = partial(mask_tokens,
+                                   mask_token_index=hf_tokenizer.mask_token_id,
+                                   special_token_indices=hf_tokenizer.all_special_ids,
+                                   vocab_size=hf_tokenizer.vocab_size,
+                                   ignore_index=-100,
+                                   replace_prob=0.0 if config.electra_mask_style else 0.1,
+                                   original_prob=0.0 if config.electra_mask_style else 0.1,
+                                   )
+
+        self.loss_fn = ELECTRALoss(
+            gen_label_smooth=config.gen_smooth_label, disc_label_smooth=config.disc_smooth_label)
 
     def training_step(self, batch, batch_idx):
         print(batch, batch_idx)
-        # loss = lossfn( self(batch))
-        loss = 0
+
+        # maskedLM
+        input_ids, sentA_lenths = batch
+        masked_inputs, labels, is_mlm_applied = self.mask_tokens(input_ids)
+        xb = (masked_inputs, sentA_lenths, is_mlm_applied, labels)
+        yb = (labels,)
+
+        ret = self(*xb)
+        mlm_gen_logits, generated, disc_logits, is_replaced, attention_mask, is_mlm_applied = ret
+        loss = self.loss_fn(ret, labels)
+
         return loss
 
     def configure_optimizers(self):
@@ -41,11 +64,7 @@ class LitElectra(pl.LightningModule):
         )
         return [optimizer], [scheduler]
 
-    def forward(self, input):
-        print(input)
-        return input
-
-    def _forward(self, masked_inputs, sentA_lenths, is_mlm_applied, labels):
+    def forward(self, masked_inputs, sentA_lenths, is_mlm_applied, labels):
         """
         masked_inputs (Tensor[int]): (B, L)
         sentA_lenths (Tensor[int]): (B, L)
@@ -89,9 +108,9 @@ class LitElectra(pl.LightningModule):
     def sample(self, logits):
         "Reimplement gumbel softmax cuz there is a bug in torch.nn.functional.gumbel_softmax when fp16 (https://github.com/pytorch/pytorch/issues/41663). Gumbel softmax is equal to what official ELECTRA code do, standard gumbel dist. = -ln(-ln(standard uniform dist.))"
         if self.sampling == 'fp32_gumbel':
-            return (logits.float() + self.gumbel_dist.sample(logits.shape)).argmax(dim=-1)
+            return (logits.float() + self.gumbel_dist.sample(logits.shape).to(logits.device)).argmax(dim=-1)
         elif self.sampling == 'fp16_gumbel':  # 5.06 ms
-            return (logits + self.gumbel_dist.sample(logits.shape)).argmax(dim=-1)
+            return (logits + self.gumbel_dist.sample(logits.shape).to(logits.device)).argmax(dim=-1)
         elif self.sampling == 'multinomial':  # 2.X ms
             return torch.multinomial(F.softmax(logits, dim=-1), 1).squeeze()
 
