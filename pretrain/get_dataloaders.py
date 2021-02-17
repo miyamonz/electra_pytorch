@@ -3,13 +3,14 @@ from _utils.mysorteddl import MySortedDL
 from pathlib import Path
 from fastai.text.all import TensorText, noop
 
+
 def get_dataloader(c, hf_tokenizer, train_dset):
     print('train_dset', train_dset)
     args = {
         'cols': {'input_ids': TensorText, 'sentA_length': noop},
         'hf_toker': hf_tokenizer,
         'n_inp': 2,
-        }
+    }
     ds = HF_Dataset(train_dset, **args)
     pad_idx = hf_tokenizer.pad_token_id
     device = 'cpu'
@@ -20,7 +21,7 @@ def get_dataloader(c, hf_tokenizer, train_dset):
         'shuffle': True,
         'drop_last': False,
         'device': device,
-        }
+    }
     dl = MySortedDL(ds, pad_idx, srtkey_fc=False, tfmd_args=tfmd_args)
     return dl
 
