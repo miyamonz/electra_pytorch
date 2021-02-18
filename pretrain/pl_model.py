@@ -36,8 +36,6 @@ class LitElectra(pl.LightningModule):
             gen_label_smooth=config.gen_smooth_label, disc_label_smooth=config.disc_smooth_label)
 
     def training_step(self, batch, batch_idx):
-        print(batch, batch_idx)
-
         # maskedLM
         input_ids, sentA_lenths = batch
         masked_inputs, labels, is_mlm_applied = self.mask_tokens(input_ids)
