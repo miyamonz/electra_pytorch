@@ -45,13 +45,13 @@ class LitElectra(pl.LightningModule):
         ret = self(*xb)
         mlm_gen_logits, generated, disc_logits, is_replaced, attention_mask, is_mlm_applied = ret
         loss = self.loss_fn(ret, labels)
-
+        self.log('loss', loss)
         return loss
 
     def configure_optimizers(self):
         # eps=1e-6, mom=0.9, sqr_mom=0.999, wd=0.01)
         # momentum, squared momentumはpytorchではbetasにあたる。で↑は初期値と一緒
-        optimizer = torch.optim.Adam(
+        optimizer = torch.optim.AdamW(
             self.parameters(), lr=self.config.lr, eps=1e-6, weight_decay=0.01)
 
         # 一旦、他のpytorch実装に習う
