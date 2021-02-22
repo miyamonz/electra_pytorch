@@ -5,7 +5,7 @@ import pytorch_lightning as pl
 
 from functools import partial
 
-from transformers import get_linear_schedule_with_warmup
+from scheduler import get_linear_schedule_with_warmup_same_time
 from mask_tokens import mask_tokens
 
 from adam_wo_bc import AdamWoBC
@@ -57,7 +57,7 @@ class LitElectra(pl.LightningModule):
             self.parameters(), lr=self.config.lr, eps=1e-6, weight_decay=0.01)
 
         # 一旦、他のpytorch実装に習う
-        scheduler = get_linear_schedule_with_warmup(
+        scheduler = get_linear_schedule_with_warmup_same_time(
             optimizer,
             num_warmup_steps=10000,
             num_training_steps=self.config.steps,
