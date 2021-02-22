@@ -8,6 +8,8 @@ from functools import partial
 from transformers import get_linear_schedule_with_warmup
 from mask_tokens import mask_tokens
 
+from adam_wo_bc import AdamWoBC
+
 from fastai.text.all import CrossEntropyLossFlat
 from fastai.text.all import LabelSmoothingCrossEntropyFlat
 
@@ -51,7 +53,7 @@ class LitElectra(pl.LightningModule):
     def configure_optimizers(self):
         # eps=1e-6, mom=0.9, sqr_mom=0.999, wd=0.01)
         # momentum, squared momentumはpytorchではbetasにあたる。で↑は初期値と一緒
-        optimizer = torch.optim.AdamW(
+        optimizer = AdamWoBC(
             self.parameters(), lr=self.config.lr, eps=1e-6, weight_decay=0.01)
 
         # 一旦、他のpytorch実装に習う
