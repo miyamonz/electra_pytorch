@@ -24,9 +24,6 @@ def adam(params: List[Tensor],
         exp_avg_sq = exp_avg_sqs[i]
         step = state_steps[i]
 
-        bias_correction1 = 1 - beta1 ** step
-        bias_correction2 = 1 - beta2 ** step
-
         if weight_decay != 0:
             grad = grad.add(param, alpha=weight_decay)
 
@@ -38,11 +35,8 @@ def adam(params: List[Tensor],
             torch.maximum(max_exp_avg_sqs[i],
                           exp_avg_sq, out=max_exp_avg_sqs[i])
             # Use the max. for normalizing running avg. of gradient
-            denom = (max_exp_avg_sqs[i].sqrt() /
-                     math.sqrt(bias_correction2)).add_(eps)
+            denom = (max_exp_avg_sqs[i].sqrt()).add_(eps)
         else:
-            denom = (exp_avg_sq.sqrt() / math.sqrt(bias_correction2)).add_(eps)
+            denom = (exp_avg_sq.sqrt()).add_(eps)
 
-        step_size = lr / bias_correction1
-
-        param.addcdiv_(exp_avg, denom, value=-step_size)
+        param.addcdiv_(exp_avg, denom, value=-lr)
