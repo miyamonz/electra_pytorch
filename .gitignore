@@ -9,3 +9,4 @@ data/
 checkpoints/*
 test_outputs/*
 tmp_*
+.ipynb_checkpoints
