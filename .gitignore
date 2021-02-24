@@ -8,3 +8,4 @@ datasets/*
 data/
 checkpoints/*
 test_outputs/*
+tmp_*
